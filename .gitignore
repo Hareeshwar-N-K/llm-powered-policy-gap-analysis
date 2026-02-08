@@ -1,0 +1,34 @@
+# Python virtual environment
+venv/
+env/
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Project specific
+data/input/*.pdf
+data/output/*.md
+!data/input/README.md
+!data/output/README.md
+
+# Logs
+*.log
+
+# Distribution
+dist/
+build/
+*.egg-info/

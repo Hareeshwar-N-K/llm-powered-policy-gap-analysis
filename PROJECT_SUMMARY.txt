@@ -1,0 +1,300 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║          HACK IITK 2026 - Policy Gap Analysis Tool                  ║
+║              Project Setup Complete ✓                                ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+📁 PROJECT STRUCTURE
+────────────────────────────────────────────────────────────────────────
+
+PS1/
+│
+├── 📄 main.py                    ← Main orchestration script
+├── ⚙️  config.py                  ← Configuration settings
+├── 📦 requirements.txt            ← Python dependencies
+├── 🚀 setup.bat                   ← Automated setup script
+│
+├── 📖 README.md                   ← Full documentation
+├── 📖 QUICKSTART.md               ← 5-minute start guide
+├── 📖 ARCHITECTURE.md             ← System design details
+├── 📖 TESTING_CHECKLIST.md        ← Testing & demo guide
+│
+├── 📂 src/
+│   ├── pdf_loader.py             ← Module 1: PDF extraction
+│   ├── llm_judge.py              ← Module 2: AI Gap Analysis
+│   └── __init__.py
+│
+└── 📂 data/
+    ├── input/                     ← Place your policy PDFs here
+    ├── reference/                 ← Place NIST framework here
+    │   └── SAMPLE_NIST_REFERENCE.md
+    └── output/                    ← Analysis results saved here
+
+
+🔧 CORE MODULES
+────────────────────────────────────────────────────────────────────────
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ Module 1: PDF Loader (src/pdf_loader.py)                           │
+├─────────────────────────────────────────────────────────────────────┤
+│ • Fast PDF text extraction using PyMuPDF                            │
+│ • Text cleaning and normalization                                   │
+│ • Metadata extraction (pages, author, title)                        │
+│ • Standalone testing: python src/pdf_loader.py <file.pdf>          │
+│                                                                     │
+│ Class: PDFLoader                                                    │
+│   - extract_text(pdf_path) → str                                    │
+│   - extract_with_metadata(pdf_path) → dict                          │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ Module 2: LLM Judge (src/llm_judge.py)                             │
+├─────────────────────────────────────────────────────────────────────┤
+│ • Local LLM integration via Ollama                                  │
+│ • Sophisticated prompt engineering                                  │
+│ • Two-phase analysis: Gap Detection → Remediation                   │
+│ • Standalone testing: python src/llm_judge.py                       │
+│                                                                     │
+│ Class: PolicyJudge                                                  │
+│   - analyze_gaps(user_policy, reference) → dict                     │
+│   - generate_remediation(policy, gaps) → dict                       │
+└─────────────────────────────────────────────────────────────────────┘
+
+
+⚡ QUICK START (5 MINUTES)
+────────────────────────────────────────────────────────────────────────
+
+Step 1: Install Ollama
+  • Download: https://ollama.ai
+  • Or: winget install Ollama.Ollama
+
+Step 2: Pull LLM Model  
+  ollama pull llama3
+
+Step 3: Start Ollama Server
+  ollama serve
+
+Step 4: Setup Python Environment
+  cd "f:\04 All_Projects\Hackathons\06 IITK Hackathon\PS1"
+  .\setup.bat
+
+  OR manually:
+  python -m venv venv
+  .\venv\Scripts\Activate
+  pip install -r requirements.txt
+
+Step 5: Run the Tool
+  python main.py
+
+
+🎯 USAGE MODES
+────────────────────────────────────────────────────────────────────────
+
+┌─ Interactive Mode (Recommended) ─────────────────────────────────────┐
+│ python main.py                                                       │
+│                                                                      │
+│ Prompts you step-by-step:                                           │
+│   1. Load your organization's policy PDF                            │
+│   2. Load reference framework PDF                                   │
+│   3. Run gap analysis                                               │
+│   4. Generate remediation plan                                      │
+└──────────────────────────────────────────────────────────────────────┘
+
+┌─ Batch Mode (Automated) ─────────────────────────────────────────────┐
+│ python main.py --batch \                                             │
+│   --user-policy "data/input/policy.pdf" \                            │
+│   --reference "data/reference/nist.pdf"                              │
+│                                                                      │
+│ Runs complete analysis without user interaction                     │
+└──────────────────────────────────────────────────────────────────────┘
+
+┌─ Custom Model ───────────────────────────────────────────────────────┐
+│ python main.py --model mistral                                       │
+│                                                                      │
+│ Use different Ollama models (llama3, mistral, codellama, etc.)      │
+└──────────────────────────────────────────────────────────────────────┘
+
+
+📊 WORKFLOW
+────────────────────────────────────────────────────────────────────────
+
+  ┌──────────────┐       ┌──────────────┐
+  │ Your Policy  │       │ NIST CSF     │
+  │   (PDF)      │       │  (PDF)       │
+  └──────┬───────┘       └──────┬───────┘
+         │                      │
+         └──────────┬───────────┘
+                    │
+               ┌────▼────┐
+               │ Extract │  (PyMuPDF)
+               │  Text   │
+               └────┬────┘
+                    │
+            ┌───────▼────────┐
+            │   PolicyJudge   │
+            │  (Local LLM)    │
+            └───────┬────────┘
+                    │
+        ┌───────────┴───────────┐
+        │                       │
+   ┌────▼────┐          ┌───────▼────────┐
+   │   Gap   │          │  Remediation   │
+   │ Analysis│          │      Plan      │
+   └────┬────┘          └───────┬────────┘
+        │                       │
+        └───────────┬───────────┘
+                    │
+            ┌───────▼────────┐
+            │ Save Results   │
+            │ (Markdown)     │
+            └────────────────┘
+              data/output/
+
+
+🧪 TESTING
+────────────────────────────────────────────────────────────────────────
+
+Test PDF Loader:
+  python src/pdf_loader.py data/input/test.pdf
+
+Test LLM Judge:
+  python src/llm_judge.py
+
+Test Full Pipeline:
+  python main.py
+
+See TESTING_CHECKLIST.md for comprehensive testing guide
+
+
+📦 DEPENDENCIES
+────────────────────────────────────────────────────────────────────────
+
+  langchain           → LLM orchestration framework
+  langchain-community → Ollama integration
+  ollama              → Python client for local LLM
+  pymupdf             → Fast PDF text extraction
+  rich                → Beautiful terminal UI
+  pydantic            → Data validation
+
+
+⚙️  CONFIGURATION (config.py)
+────────────────────────────────────────────────────────────────────────
+
+  Ollama Settings:
+    OLLAMA_BASE_URL = "http://localhost:11434"
+    OLLAMA_MODEL = "llama3"
+
+  LLM Parameters:
+    LLM_TEMPERATURE = 0.1    (Low for consistent analysis)
+    LLM_MAX_TOKENS = 4096
+    LLM_TIMEOUT = 300        (5 minutes)
+
+  Reference Framework:
+    REFERENCE_FRAMEWORK = "CIS MS-ISAC NIST Cybersecurity Framework"
+
+
+🎓 PROMPT ENGINEERING
+────────────────────────────────────────────────────────────────────────
+
+Gap Analysis Prompt:
+  ✓ Identifies MISSING PROVISIONS
+  ✓ Finds WEAK/INCOMPLETE AREAS
+  ✓ Lists COMPLIANCE GAPS
+  ✓ Assesses RISK LEVELS (Critical/High/Medium/Low)
+  ✓ Prioritizes TOP 5 CRITICAL GAPS
+
+Remediation Prompt:
+  ✓ Executive Summary
+  ✓ Specific Recommendations with Priorities
+  ✓ Draft Policy Text (ready to copy-paste)
+  ✓ Implementation Roadmap
+  ✓ Compliance Validation Checkpoints
+
+
+🏆 HACKATHON COMPLIANCE
+────────────────────────────────────────────────────────────────────────
+
+✅ Task 1: Gap Analysis
+  ✓ Ingests user policy (PDF)
+  ✓ Ingests NIST framework
+  ✓ Uses local LLM (Ollama)
+  ✓ Identifies missing provisions
+  ✓ Identifies weak areas
+
+✅ Task 2: Remediation
+  ✓ Generates revised policy
+  ✓ Automated recommendations
+
+✅ Technical Constraints
+  ✓ 100% Offline (no cloud APIs)
+  ✓ Local LLM (Ollama)
+  ✓ Uses langchain
+  ✓ Uses pymupdf
+  ✓ Uses rich
+
+
+🔧 TROUBLESHOOTING
+────────────────────────────────────────────────────────────────────────
+
+❌ "Cannot connect to Ollama"
+  → Run: ollama serve
+
+❌ "Model not found"
+  → Run: ollama pull llama3
+
+❌ "PDF extraction failed"
+  → Check file path and ensure PDF is not password-protected
+
+❌ "Out of memory"
+  → Use smaller model: ollama pull mistral
+
+
+📚 DOCUMENTATION
+────────────────────────────────────────────────────────────────────────
+
+  README.md               → Complete project documentation
+  QUICKSTART.md           → 5-minute setup guide
+  ARCHITECTURE.md         → System design & technical details
+  TESTING_CHECKLIST.md    → Testing & demo preparation
+  config.py               → All configuration options
+
+
+🚀 NEXT STEPS
+────────────────────────────────────────────────────────────────────────
+
+1. Run setup script:
+   .\setup.bat
+
+2. Ensure Ollama is running:
+   ollama serve
+
+3. Pull the model:
+   ollama pull llama3
+
+4. Place your PDFs:
+   • Your policy → data/input/
+   • NIST framework → data/reference/
+
+5. Run the tool:
+   python main.py
+
+6. Review results:
+   • Gap analysis → data/output/gap_analysis_*.md
+   • Remediation → data/output/remediation_*.md
+
+
+💡 PRO TIPS
+────────────────────────────────────────────────────────────────────────
+
+• Use --batch mode for automation
+• Switch models with --model mistral for different perspectives
+• Lower LLM_TEMPERATURE in config.py for more consistent output
+• Test individual modules before full pipeline
+• Keep Ollama running in separate terminal
+• Check output/ directory for timestamped results
+
+
+╔══════════════════════════════════════════════════════════════════════╗
+║  Built for HACK IITK 2026 Cybersecurity Hackathon                   ║
+║  Empowering organizations with AI-powered policy analysis            ║
+║  100% Offline • Privacy-Preserving • Production-Ready                ║
+╚══════════════════════════════════════════════════════════════════════╝
