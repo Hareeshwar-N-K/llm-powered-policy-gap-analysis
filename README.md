@@ -1,17 +1,26 @@
 # Policy Gap Analysis Tool 🔒
 
 **HACK IITK 2026 - Cybersecurity Hackathon**  
-**Problem Statement 1: Local LLM Powered Policy Gap Analysis**
+**Problem Statement 1: Local LLM Powered Policy Gap Analysis**  
+**Version 2.0 - Enhanced Edition**
 
 A Python-based cybersecurity tool that uses **local LLMs** (via Ollama) to analyze organizational security policies against industry standards like the CIS MS-ISAC NIST Cybersecurity Framework.
 
 ## 🎯 Features
 
+### Core Features
 - **100% Offline**: No cloud APIs required - runs entirely on your local machine
 - **Gap Analysis**: Identifies missing provisions and weak areas in security policies
 - **Automated Remediation**: Generates revised policy sections to fix identified gaps
-- **PDF Support**: Extracts and analyzes text from PDF policy documents
+- **Multi-Format Support**: ✨ **NEW** - Supports PDF, TXT, and Markdown files
 - **Rich Terminal UI**: Beautiful, professional console output
+
+### 🆕 Enhanced Features (v2.0)
+- **Compliance Scoring**: Automated scoring system with risk level assessment
+- **Executive Summaries**: Auto-generated C-suite ready summaries
+- **Multiple Export Formats**: Markdown, JSON, and standalone executive reports
+- **Smart Path Resolution**: Auto-finds files in input/reference directories
+- **Advanced Error Handling**: Graceful recovery and helpful error messages
 - **Configurable**: Easy to switch between different Ollama models
 
 ## 🏗️ Architecture
@@ -19,15 +28,16 @@ A Python-based cybersecurity tool that uses **local LLMs** (via Ollama) to analy
 ```
 PS1/
 ├── src/
-│   ├── pdf_loader.py      # Module 1: PDF text extraction
-│   └── llm_judge.py       # Module 2: LLM-powered gap analysis
+│   ├── document_loader.py     # ✨ Enhanced: Multi-format document extraction
+│   ├── llm_judge.py           # Module 2: LLM-powered gap analysis
+│   └── utils.py               # ✨ NEW: Scoring, export, summaries
 ├── data/
-│   ├── input/             # Place your policy PDFs here
-│   ├── reference/         # Place NIST framework PDFs here
-│   └── output/            # Analysis results saved here
-├── config.py              # Configuration settings
-├── main.py                # Main orchestration script
-└── requirements.txt       # Python dependencies
+│   ├── input/                 # Place your policy files here (PDF/TXT/MD)
+│   ├── reference/             # Place NIST framework here
+│   └── output/                # Analysis results saved here
+├── config.py                  # Configuration settings
+├── main.py                    # Main orchestration script
+└── requirements.txt           # Python dependencies
 ```
 
 ## 🚀 Quick Start
@@ -77,14 +87,17 @@ PS1/
 ```powershell
 python main.py
 ```
-Follow the prompts to:
-1. Load your organization's policy (PDF)
-2. Load the reference framework (PDF)
-3. Run gap analysis
+Follow the prompts to:/TXT/MD) - ✨ just enter filename!
+2. Load the reference framework (PDF/TXT/MD)
+3. Run gap analysis with compliance scoring
+4. Generate remediation plan
+5. Export complete report (Markdown + JSON + Executive Summary)
 4. Generate remediation plan
 
-#### Batch Mode
-```powershell
+#### Batch Modepolicy.pdf" --reference "nist.md"
+```
+
+✨ **NEW**: Files are auto-located in `data/input/` and `data/reference/` - no need for full paths!powershell
 python main.py --batch --user-policy "data/input/user_policy.pdf" --reference "data/reference/nist_framework.pdf"
 ```
 
@@ -92,17 +105,49 @@ python main.py --batch --user-policy "data/input/user_policy.pdf" --reference "d
 ```powershell
 python main.py --model mistral
 ```
-
-## 📝 Example Workflow
-
-1. **Prepare Your Documents**
-   - Place your organization's security policy in `data/input/user_policy.pdf`
-   - Place NIST framework PDF in `data/reference/nist_framework.pdf`
+```powershell
+   # Place your policy (any format):
+   data/input/company_policy.pdf  # OR .txt, .md
+   
+   # Reference framework included:
+   data/reference/SAMPLE_NIST_REFERENCE.md
+   ```
 
 2. **Run Analysis**
    ```powershell
    python main.py
+   
+   # Just enter filenames (smart search finds them):
+   Enter path: company_policy.pdf
+   Enter Enhanced Document Loader ✨
+```powershell
+# Supports PDF, TXT, MD
+python src/document_loader.py data/input/policy.pdf
+python src/document_loader.py data/reference/SAMPLE_NIST_REFERENCE.md
+```
+
+### Test Compliance Scoring & Utilities ✨
+```powershell
+python src/utils.py
+3. **Review Results** ✨
+   - **Gap analysis** → `data/output/gap_analysis_TIMESTAMP.md`
+   - **Remediation plan** → `data/output/remediation_TIMESTAMP.md`
+   - **Complete report** → `data/output/complete_report_TIMESTAMP.md`
+   - **JSON export** → `data/output/complete_report_TIMESTAMP.json`
+   - **Executive summary** → `data/output/executive_summary_TIMESTAMP.md`
+   
+4. **View Compliance Score** ✨
    ```
+   ┌─ Compliance Score ───────────────┐
+   │ Overall Compliance    ✓ 72%     │
+   │ Risk Level            Moderate   │
+   │ Total Gaps Found      12         │
+   │   • Critical          3          │
+   │   • High              4          │
+   │   • Medium            3          │
+   │   • Low               2          │
+   └──────────────────────────────────┘
+   ``
 
 3. **Review Results**
    - Gap analysis saved to `data/output/gap_analysis_TIMESTAMP.md`
@@ -112,7 +157,49 @@ python main.py --model mistral
 
 ### Test PDF Loader
 ```powershell
-python src/pdf_loader.py data/input/user_policy.pdf
+pythEnhanced Workflow
+```
+  ┌──────────────┐       ┌──────────────┐
+  │ Your Policy  │       │ NIST CSF     │
+  │ (PDF/TXT/MD) │       │ (PDF/TXT/MD) │
+  └──────┬───────┘       └──────┬───────┘
+         │                      │
+         └──────────┬───────────┘
+                    │
+            ┌───────▼────────┐
+            │ Document Loader│  (Multi-format, Smart Search)
+            │  Extract Text  │
+            └───────┬────────┘
+                    │
+            ┌───────▼────────┐
+            │   PolicyJudge  │  (Local LLM via Ollama)
+            │  Gap Analysis  │
+            └───────┬────────┘
+                    │
+        ┌───────────┴────────────┐
+        │                        │
+   ┌────▼────┐          ┌────────▼────────┐
+   │   Gap   │          │  Compliance     │
+   │ Analysis│          │  Scoring        │
+   └────┬────┘          └────────┬────────┘
+        │                        │
+        └───────────┬────────────┘
+                    │
+            ┌───────▼────────┐
+            │  Remediation   │
+            │  Generation    │
+            └───────┬────────┘
+                    │
+            ┌───────▼────────┐
+            │ Executive      │
+            │ Summary        │
+            └───────┬────────┘
+                    │
+            ┌───────▼────────┐
+            │ Export Results │
+            │ (MD + JSON)    │
+            └────────────────┘
+```/user_policy.pdf
 ```
 
 ### Test LLM Judge

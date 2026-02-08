@@ -1,17 +1,19 @@
 """
-Module 1: PDF Document Loader
-Extracts text content from PDF policy documents using PyMuPDF (fitz)
+PDF Document Loader - Legacy Compatibility Wrapper
+Use document_loader.py for enhanced multi-format support
 """
-import fitz  # PyMuPDF
-from pathlib import Path
-from typing import Optional
-from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, TextColumn
+# Import the enhanced loader for backward compatibility
+from .document_loader import DocumentLoader
 
-console = Console()
+# Backward compatibility alias
+PDFLoader = DocumentLoader
+
+# For direct usage
+console = DocumentLoader().console if hasattr(DocumentLoader(), 'console') else None
 
 
-class PDFLoader:
+# Legacy class for compatibility (delegates to DocumentLoader)
+class PDFLoaderLegacy:
     """
     Handles extraction of text content from PDF files.
     Optimized for policy documents with proper error handling.

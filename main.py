@@ -13,9 +13,11 @@ from rich.prompt import Prompt, Confirm
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from src.pdf_loader import PDFLoader
+from src.document_loader import DocumentLoader
 from src.llm_judge import PolicyJudge
+from src.utils import ComplianceScorer, ResultExporter, ExecutiveSummary
 import config
+import json
 
 console = Console()
 
@@ -27,9 +29,15 @@ class PolicyAnalysisPipeline:
     
     def __init__(self):
         """Initialize the analysis pipeline."""
-        self.pdf_loader = PDFLoader(verbose=config.VERBOSE)
+        # Use enhanced DocumentLoader with smart path searching
+        self.doc_loader = DocumentLoader(
+            verbose=config.VERBOSE,
+            search_dirs=[config.INPUT_DIR, config.REFERENCE_DIR, Path.cwd()]
+        )
         self.judge = None  # Initialized when needed
         self.results = {}
+        self.scorer = ComplianceScorer()
+        self.exporter = ResultExporter()
     
     def run_interactive(self):
         """Run the tool in interactive mode."""
@@ -43,24 +51,26 @@ class PolicyAnalysisPipeline:
         
         # Step 1: Load user policy
         console.print("\n[bold]Step 1: Load Your Organization's Policy[/bold]")
+        console.print("[dim]Supported formats: PDF, TXT, MD[/dim]")
         user_policy_path = Prompt.ask(
-            "Enter path to your policy PDF",
+            "Enter path to your policy file",
             default=str(config.INPUT_DIR / "user_policy.pdf")
         )
         
-        user_policy_text = self.pdf_loader.extract_text(user_policy_path)
+        user_policy_text = self.doc_loader.extract_text(user_policy_path)
         if not user_policy_text:
             console.print("[red]Failed to load user policy. Exiting.[/red]")
             return
         
         # Step 2: Load reference standard
         console.print("\n[bold]Step 2: Load Reference Standard[/bold]")
+        console.print("[dim]Supported formats: PDF, TXT, MD[/dim]")
         reference_path = Prompt.ask(
-            "Enter path to reference framework PDF",
-            default=str(config.REFERENCE_DIR / "nist_framework.pdf")
+            "Enter path to reference framework file",
+            default=str(config.REFERENCE_DIR / "SAMPLE_NIST_REFERENCE.md")
         )
         
-        reference_text = self.pdf_loader.extract_text(reference_path)
+        reference_text = self.doc_loader.extract_text(reference_path)
         if not reference_text:
             console.print("[red]Failed to load reference framework. Exiting.[/red]")
             return
@@ -84,10 +94,22 @@ class PolicyAnalysisPipeline:
             
             if gap_result:
                 self.results['gap_analysis'] = gap_result
+                
+                # Calculate compliance score
+                console.print("\n[cyan]Calculating compliance score...[/cyan]")
+                score = self.scorer.calculate_score(gap_result['analysis'])
+                self.results['compliance_score'] = score
+                self.scorer.display_score(score)
+                
+                # Generate executive summary
+                console.print("\n[cyan]Generating executive summary...[/cyan]")
+                exec_summary = ExecutiveSummary.generate(gap_result['analysis'], score)
+                self.results['executive_summary'] = exec_summary
+                
                 self._save_results(gap_result, "gap_analysis")
         
         # Step 5: Remediation
-        if Confirm.ask("\n[bold]Generate Remediation Plan?[/bold]", default=True):
+        if 'gap_analysis' in self.results and Confirm.ask("\n[bold]Generate Remediation Plan?[/bold]", default=True):
             console.print("\n" + "="*70)
             remediation_result = self.judge.generate_remediation(
                 user_policy_text=user_policy_text,
@@ -98,6 +120,10 @@ class PolicyAnalysisPipeline:
             if remediation_result:
                 self.results['remediation'] = remediation_result
                 self._save_results(remediation_result, "remediation")
+        
+        # Step 6: Export options
+        if self.results and Confirm.ask("\n[bold]Export complete report (Markdown + JSON)?[/bold]", default=True):
+            self._export_complete_report()
         
         # Summary
         self._print_summary()
@@ -117,8 +143,8 @@ class PolicyAnalysisPipeline:
         
         # Load documents
         console.print("\n[bold]Loading Documents...[/bold]")
-        user_policy_text = self.pdf_loader.extract_text(user_policy_path)
-        reference_text = self.pdf_loader.extract_text(reference_path)
+        user_policy_text = self.doc_loader.extract_text(user_policy_path)
+        reference_text = self.doc_loader.extract_text(reference_path)
         
         if not user_policy_text or not reference_text:
             console.print("[red]Failed to load documents. Exiting.[/red]")
@@ -140,11 +166,24 @@ class PolicyAnalysisPipeline:
         
         if gap_result:
             self.results['gap_analysis'] = gap_result
+            
+            # Calculate compliance score
+            score = self.scorer.calculate_score(gap_result['analysis'])
+            self.results['compliance_score'] = score
+            self.scorer.display_score(score)
+            
+            # Generate executive summary
+            exec_summary = ExecutiveSummary.generate(gap_result['analysis'], score)
+            self.results['executive_summary'] = exec_summary
+            
             self._save_results(gap_result, "gap_analysis")
         else:
             return False
         
         # Run remediation
+        # Export complete report
+        self._export_complete_report()
+        
         remediation_result = self.judge.generate_remediation(
             user_policy_text=user_policy_text,
             gap_analysis=gap_result['analysis'],
@@ -188,14 +227,49 @@ class PolicyAnalysisPipeline:
         output_path.write_text(content, encoding='utf-8')
         console.print(f"\n[green]✓ Results saved to:[/green] [cyan]{output_path}[/cyan]")
     
+    def _export_complete_report(self):
+        """Export complete analysis report in multiple formats."""
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        # Prepare complete results
+        export_data = {
+            'timestamp': datetime.now().isoformat(),
+            'framework': config.REFERENCE_FRAMEWORK,
+            'model': config.OLLAMA_MODEL,
+            **self.results
+        }
+        
+        # Export to JSON
+        json_path = config.OUTPUT_DIR / f"complete_report_{timestamp}.json"
+        self.exporter.export_to_json(export_data, json_path)
+        
+        # Export enhanced markdown with all sections
+        md_path = config.OUTPUT_DIR / f"complete_report_{timestamp}.md"
+        self.exporter.export_to_markdown(export_data, md_path, include_score=True)
+        
+        # Save executive summary separately
+        if 'executive_summary' in self.results:
+            exec_path = config.OUTPUT_DIR / f"executive_summary_{timestamp}.md"
+            exec_path.write_text(self.results['executive_summary'], encoding='utf-8')
+            console.print(f"[green]✓ Executive summary saved to:[/green] [cyan]{exec_path}[/cyan]")
+    
     def _print_summary(self):
         """Print final summary of the analysis."""
         console.print("\n" + "="*70)
+        
+        summary_text = "[bold green]Analysis Complete![/bold green]\n\n"
+        summary_text += f"[white]Gap Analysis: [/white]{'✓' if 'gap_analysis' in self.results else '✗'}\n"
+        
+        if 'compliance_score' in self.results:
+            score = self.results['compliance_score']['compliance_percentage']
+            summary_text += f"[white]Compliance Score: [/white]{score}\n"
+        
+        summary_text += f"[white]Remediation: [/white]{'✓' if 'remediation' in self.results else '✗'}\n"
+        summary_text += f"[white]Executive Summary: [/white]{'✓' if 'executive_summary' in self.results else '✗'}\n\n"
+        summary_text += f"[dim]Results saved to: {config.OUTPUT_DIR}[/dim]"
+        
         console.print(Panel.fit(
-            "[bold green]Analysis Complete![/bold green]\n\n"
-            f"[white]Gap Analysis: [/white]{'✓' if 'gap_analysis' in self.results else '✗'}\n"
-            f"[white]Remediation: [/white]{'✓' if 'remediation' in self.results else '✗'}\n\n"
-            f"[dim]Results saved to: {config.OUTPUT_DIR}[/dim]",
+            summary_text,
             border_style="green",
             box=box.DOUBLE
         ))
